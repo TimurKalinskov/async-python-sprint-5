@@ -1,0 +1,15 @@
+fastapi==0.89.1
+orjson==3.8.5
+pydantic==1.10.4
+python-dotenv==0.21.0
+uvicorn==0.20.0
+uvloop==0.17.0; sys_platform == "linux" or sys_platform == "darwin"
+SQLAlchemy==1.4.46
+SQLAlchemy-Utils==0.39.0
+asyncpg==0.27.0
+psycopg2-binary==2.9.5
+databases[postgresql]==0.7.0
+alembic==1.9.2
+pytest==7.2.1
+pytest-asyncio==0.20.3
+httpx==0.23.3

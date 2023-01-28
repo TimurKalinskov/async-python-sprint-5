@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./src/.env
+    ports:
+      - "5434:5432"
+  web:
+    build:
+      context: .
+      dockerfile: ./dockerization/Dockerfile
+    container_name: fastapi_app
+    restart: always
+    volumes:
+      - static_volume:/usr/src/app/src/static
+      - media_volume:/usr/src/app/src/media
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./src/.env
+    command: sh -c "alembic upgrade head && python main.py"
+    depends_on:
+      - db
+  nginx:
+    build:
+      context: .
+      dockerfile: ./dockerization/Dockerfile-balancer
+    container_name: nginx_balancer
+    volumes:
+      - static_volume:/usr/src/app/src/static
+      - media_volume:/usr/src/app/src/media
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
