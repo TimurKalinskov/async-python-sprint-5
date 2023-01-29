@@ -15,6 +15,9 @@ class AppSettings(BaseSettings):
     length_url: int = 6
     domain_prefix: str = ''  # for example, 'test.ru/'
     echo_queries: bool = False
+    token_lifetime: int = 600  # seconds
+    jwt_secret: str = 'secret_word'
+    jwt_algorithm: str = 'HS256'
 
     class Config:
         env_file = '.env'

@@ -16,6 +16,7 @@ from services.short_statistic import (
 from schemas.short_statistic import (
     ShortUrlFullStatistic, ShortUrlUsesCount, ShortUrlStatisticCreate
 )
+from services.auth.auth_bearer import JWTBearer
 
 
 router = APIRouter()
@@ -25,7 +26,8 @@ router = APIRouter()
     '/',
     response_model=list[short_schema.ShortUrl],
     summary='Get a list of URLs',
-    description='Get a list of URLs and their shorthand representation.'
+    description='Get a list of URLs and their shorthand representation.',
+    dependencies=[Depends(JWTBearer())]
 )
 async def read_short_urls(
         db: AsyncSession = Depends(get_session),

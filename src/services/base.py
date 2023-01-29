@@ -9,7 +9,6 @@ from sqlalchemy.exc import NoResultFound, IntegrityError
 from sqlalchemy import select, update as sqlalchemy_update
 
 from db.db import Base
-from services.exceptions import CreateException
 
 
 class Repository(ABC):
@@ -58,19 +57,13 @@ class RepositoryDB(Repository,
         return results.scalars().all()
 
     async def create(
-            self, db: AsyncSession, *, objects_in: list[CreateSchemaType]
-    ) -> list[ModelType]:
-        objects_in_data = jsonable_encoder(objects_in)
-        db_objects = [
-            self._model(**obj) for obj in objects_in_data
-        ]
-        db.add_all(db_objects)
-        try:
-            await db.commit()
-        except IntegrityError:
-            raise CreateException
-        [await db.refresh(obj) for obj in db_objects]
-        return db_objects
+            self, db: AsyncSession, *, obj_in: CreateSchemaType) -> ModelType:
+        obj_in_data = jsonable_encoder(obj_in)
+        db_obj = self._model(**obj_in_data)
+        db.add(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
+        return db_obj
 
     async def update(
         self,
@@ -84,7 +77,7 @@ class RepositoryDB(Repository,
             sqlalchemy_update(self._model)
             .where(self._model.id == db_obj.id)
             .values(**obj_in_data)
-            .execution_options(synchronize_session="fetch")
+            .execution_options(synchronize_session='fetch')
         )
         await db.execute(query)
         await db.commit()

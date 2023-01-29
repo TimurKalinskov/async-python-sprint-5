@@ -7,6 +7,7 @@ from asyncpg.exceptions import PostgresError
 
 from db.db import get_session
 from schemas.inspect import DatabaseStatusSuccess, DatabaseStatusFail
+from services.auth.auth_bearer import JWTBearer
 
 
 router = APIRouter()
@@ -19,7 +20,8 @@ router = APIRouter()
         status.HTTP_200_OK: {'model': DatabaseStatusSuccess}
     },
     description='Get database connection status. '
-                'If the database is connected - show information about it.'
+                'If the database is connected - show information about it.',
+    dependencies=[Depends(JWTBearer())]
 )
 async def ping_database(
         response: Response, db: AsyncSession = Depends(get_session)
