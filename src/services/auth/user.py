@@ -30,7 +30,7 @@ class RepositoryShort(RepositoryDB[User, UserLogin, UserUpdatePassword]):
         return results.scalar_one_or_none()
 
     @staticmethod
-    async def check_user(db: AsyncSession, data_in: UserLogin) -> bool:
+    async def check_user(db: AsyncSession, data_in: UserLogin) -> User | None:
         statement = select(User).where(
             User.username == data_in.username,
         )
@@ -38,7 +38,8 @@ class RepositoryShort(RepositoryDB[User, UserLogin, UserUpdatePassword]):
         user = result.scalar_one_or_none()
         if not user:
             raise NoResultFound
-        return verify_password(data_in.password, user.password)
+        if verify_password(data_in.password, user.password):
+            return user
 
     async def update(
             self,

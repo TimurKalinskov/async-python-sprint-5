@@ -15,9 +15,13 @@ class AppSettings(BaseSettings):
     length_url: int = 6
     domain_prefix: str = ''  # for example, 'test.ru/'
     echo_queries: bool = False
-    token_lifetime: int = 600  # seconds
+    token_lifetime: int = 6000  # seconds
     jwt_secret: str = 'secret_word'
     jwt_algorithm: str = 'HS256'
+    aws_access_key_id: str = None
+    aws_secret_access_key: str = None
+    s3_endpoint: str = 'https://storage.yandexcloud.net/'
+    s3_bucket: str
 
     class Config:
         env_file = '.env'

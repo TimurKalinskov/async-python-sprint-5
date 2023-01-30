@@ -8,3 +8,11 @@ class CreateStatisticException(Exception):
 
 class UrlDeletedException(Exception):
     pass
+
+
+class UploadException(Exception):
+    pass
+
+
+class DownloadException(Exception):
+    pass
