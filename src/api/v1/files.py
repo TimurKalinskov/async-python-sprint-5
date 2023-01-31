@@ -7,6 +7,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import constr
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiobotocore.session import AioBaseClient
+from zipstream import AioZipStream
 from fastapi import (
     APIRouter, Depends, HTTPException, status, Request, Query, Form, UploadFile
 )
@@ -21,7 +22,8 @@ from services.s3_files.upload import upload_content
 from services.s3_files.download import download_content
 from services.utils import is_valid_uuid, translit
 from services.file import (
-    add_file_db_record, get_all_files, get_file_by_uuid, get_file_by_path
+    add_file_db_record, get_all_files, get_file_by_uuid, get_file_by_path,
+    get_all_by_path
 )
 
 router = APIRouter()
@@ -30,8 +32,8 @@ router = APIRouter()
 @router.get(
     '/list',
     response_model=file_schema.FileDownloaded,
-    summary='Get a list of URLs',
-    description='Get a list of URLs and their shorthand representation.',
+    summary='Get a list of available files',
+    description='Get a list of available files for download.',
     dependencies=[Depends(JWTBearer())]
 )
 async def get_list_files(
@@ -61,8 +63,8 @@ async def get_list_files(
     '/upload',
     status_code=status.HTTP_201_CREATED,
     response_model=file_schema.FileInDBBase,
-    summary='Create short URL',
-    description='Create new shorthand representation by URL.',
+    summary='Upload new file',
+    description='Upload new file to file storage.',
     dependencies=[Depends(JWTBearer())]
 )
 async def upload_file(
@@ -107,13 +109,14 @@ async def upload_file(
     '/download',
     status_code=status.HTTP_200_OK,
     response_class=StreamingResponse,
-    summary='Create short URL',
-    description='Create new shorthand representation by URL.',
+    summary='Download file',
+    description='Download file from file storage by PATH or UUID4.',
     dependencies=[Depends(JWTBearer())]
 )
 async def download_file(
         *,
         request: Request,
+        zipped: bool = False,
         db: AsyncSession = Depends(get_session),
         path: constr(regex=r'^[^\/].+(?=\/)*[\/]?.+$') | UUID =
         Query(..., description='Path or UUID4'),
@@ -127,20 +130,39 @@ async def download_file(
     if is_valid_uuid(path):
         file_obj = await get_file_by_uuid(db=db, pk=path, user_id=user_id)
     else:
-        file_obj = await get_file_by_path(db=db, path=path, user_id=user_id)
+        if path[-1] == '/':
+            file_obj = await get_all_by_path(db=db, path=path, user_id=user_id)
+        else:
+            file_obj = await get_file_by_path(db=db, path=path, user_id=user_id)
     if not file_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail='File with this UUID not found'
+            detail='File with this UUID or PATH not found'
         )
-
+    if zipped is True:
+        file_obj = [file_obj]
+    if isinstance(file_obj, list):
+        files = [
+            {
+                'stream': await download_content(
+                    client=s3_client, file_path=file.path),
+                'name': file.name
+            } for file in file_obj
+        ]
+        content = AioZipStream(files, chunksize=32768).stream()
+        media_type = 'application/x-zip-compressed'
+        file_name = 'files.zip'
+    else:
+        content = await download_content(
+            client=s3_client, file_path=file_obj.path)
+        media_type = file_obj.content_type
+        file_name = file_obj.name.translate(translit)
     try:
         return StreamingResponse(
-            await download_content(client=s3_client, file_path=file_obj.path),
-            media_type=file_obj.content_type,
+            content,
+            media_type=media_type,
             headers={
-                'Content-Disposition':
-                    f'filename="{file_obj.name.translate(translit)}"'
+                'Content-Disposition': f'attachment; filename="{file_name}"'
             }
         )
     except DownloadException:

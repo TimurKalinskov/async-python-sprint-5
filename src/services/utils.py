@@ -15,15 +15,6 @@ symbols = (
 translit = {ord(a): ord(b) for a, b in zip(*symbols)}
 
 
-def generate_short_url(url: str):
-    protocol = urlparse(url).scheme
-    char = string.ascii_uppercase + string.digits + string.ascii_lowercase
-    short_url = f'{protocol}://{app_settings.domain_prefix}' + ''.join(
-        random.choice(char) for x in range(app_settings.length_url)
-    )
-    return short_url
-
-
 def is_valid_uuid(uuid_to_test, version=4):
     """
     Check if uuid_to_test is a valid UUID.

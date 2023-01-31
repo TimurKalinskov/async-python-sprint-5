@@ -8,12 +8,10 @@ logging_config.dictConfig(LOGGING)
 
 
 class AppSettings(BaseSettings):
-    app_title: str = "URLs shorts"
+    app_title: str = "File storage"
     database_dsn: PostgresDsn
     project_host: str = '0.0.0.0'
     project_port: int = 8080
-    length_url: int = 6
-    domain_prefix: str = ''  # for example, 'test.ru/'
     echo_queries: bool = False
     token_lifetime: int = 6000  # seconds
     jwt_secret: str = 'secret_word'

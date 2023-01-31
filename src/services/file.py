@@ -65,3 +65,13 @@ async def get_file_by_path(db: AsyncSession, path: str, user_id=str) -> File:
     )
     result = await db.execute(statement=statement)
     return result.scalar_one_or_none()
+
+
+async def get_all_by_path(
+        db: AsyncSession, path: str, user_id=str) -> list[File]:
+    statement = (
+        select(File).
+        where(and_(File.path.like(f'{path}%'), File.account_id == user_id))
+    )
+    result = await db.execute(statement=statement)
+    return list(result.scalars())

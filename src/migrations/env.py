@@ -26,7 +26,6 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from models.short import Short, ShortStatistic
 from models.user import User
 from models.file import File
 from db.db import Base
