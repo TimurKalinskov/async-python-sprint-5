@@ -21,5 +21,6 @@ class File(Base):
         ForeignKey('users.id', ondelete='SET NULL'), nullable=True
     )
     content_type = Column(String(256), nullable=True)
+    extension = Column(String(256), nullable=True)
 
     account = relationship('User', back_populates='files')

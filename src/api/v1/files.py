@@ -23,7 +23,7 @@ from services.s3_files.download import download_content
 from services.utils import is_valid_uuid, translit
 from services.file import (
     add_file_db_record, get_all_files, get_file_by_uuid, get_file_by_path,
-    get_all_by_path
+    get_all_by_path, search_files_in_db
 )
 
 router = APIRouter()
@@ -90,7 +90,8 @@ async def upload_file(
             size=file_size,
             is_downloadable=True,
             account_id=get_user_id(request),
-            content_type=file_bytes.content_type
+            content_type=file_bytes.content_type,
+            extension=os.path.splitext(Path(path).name)[1].replace('.', '')
     )
     try:
         await upload_content(
@@ -169,3 +170,38 @@ async def download_file(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail='S3 download error'
         )
+
+
+@router.get(
+    '/search',
+    response_model=file_schema.SearchFile,
+    summary='Searching files',
+    description='Searching files by different parameters.',
+    dependencies=[Depends(JWTBearer())]
+)
+async def search_files(
+        request: Request,
+        db: AsyncSession = Depends(get_session),
+        path: str = None,
+        extension: str = None,
+        limit: int = Query(default=100, ge=0),
+        query: str = '',
+        is_regex: bool = Query(default=False, description='query is regex'),
+        order_by: str = Query(
+            default='id', enum=['id', 'name', 'created_at', 'path', 'size']
+        ),
+) -> Any:
+    """
+    Search files.
+    """
+    user_id = get_user_id(request)
+    files = await search_files_in_db(
+        db=db, user_id=user_id, path=path, extension=extension, query=query,
+        is_regex=is_regex, order_by=order_by, limit=limit
+    )
+    files_dict = jsonable_encoder(files)
+    files = []
+    if files_dict:
+        files = [file_schema.FileInfo(**file) for file in files_dict]
+    result = file_schema.SearchFile(matches=files)
+    return result

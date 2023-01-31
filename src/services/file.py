@@ -2,7 +2,7 @@ from datetime import datetime
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, update as sqlalchemy_update
+from sqlalchemy import select, and_, or_, text, update as sqlalchemy_update
 from sqlalchemy.orm import defer
 from sqlalchemy.exc import IntegrityError
 
@@ -75,3 +75,44 @@ async def get_all_by_path(
     )
     result = await db.execute(statement=statement)
     return list(result.scalars())
+
+
+async def search_files_in_db(
+        db: AsyncSession, user_id: str, path: str, extension: str, query: str,
+        is_regex: bool, order_by: str, limit: int = 100
+) -> list[File]:
+    clause = []
+    params = {}
+
+    if path:
+        clause.append(File.path.like(f'{path}%'))
+    if extension:
+        clause.append(File.extension.like(f'%{extension}%'))
+    if query:
+        if is_regex:
+            clause.append(text(
+                ' OR '.join(
+                    [f"{column}::text ~ :x"
+                     for column in File.__table__.columns.keys()]
+                )
+            ))
+            params['x'] = f'{query}'
+
+        else:
+            clause.append(text(
+                ' OR '.join(
+                    [f"{column}::text ilike :x"
+                     for column in File.__table__.columns.keys()]
+                )
+            ))
+            params['x'] = f'%{query}%'
+    clause.append(File.account_id == user_id)
+
+    statement = (
+        select(File).
+        where(and_(*clause)).
+        order_by(order_by).
+        limit(limit)
+    )
+    results = await db.execute(statement=statement, params=params)
+    return results.scalars().all()

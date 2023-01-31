@@ -30,8 +30,13 @@ class FileCreate(BaseModel):
     is_downloadable: bool
     account_id: UUID
     content_type: str
+    extension: str
 
 
 class FileDownloaded(BaseModel):
     account_id: UUID
     files: list[FileInfo]
+
+
+class SearchFile(BaseModel):
+    matches: list[FileInfo]
