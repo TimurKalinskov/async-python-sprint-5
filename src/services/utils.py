@@ -1,10 +1,4 @@
-import string
-import random
 from uuid import UUID
-
-from urllib.parse import urlparse
-
-from core.config import app_settings
 
 
 symbols = (

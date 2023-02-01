@@ -2,12 +2,12 @@ import os
 from typing import Any
 from uuid import UUID
 from pathlib import Path
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import StreamingResponse
 from pydantic import constr
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiobotocore.session import AioBaseClient
 from zipstream import AioZipStream
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import StreamingResponse
 from fastapi import (
     APIRouter, Depends, HTTPException, status, Request, Query, Form, UploadFile
 )
@@ -20,11 +20,11 @@ from services.auth.auth_handler import get_user_id
 from services.exceptions import UploadException, DownloadException
 from services.s3_files.upload import upload_content
 from services.s3_files.download import download_content
-from services.utils import is_valid_uuid, translit
+from services.utils import translit
 from services.file import (
-    add_file_db_record, get_all_files, get_file_by_uuid, get_file_by_path,
-    get_all_by_path, search_files_in_db
+    add_file_db_record, get_all_files, search_files_in_db, get_file_obj
 )
+
 
 router = APIRouter()
 
@@ -127,14 +127,8 @@ async def download_file(
     Download file.
     """
     user_id = get_user_id(request)
+    file_obj = await get_file_obj(db=db, path=path, user_id=user_id)
 
-    if is_valid_uuid(path):
-        file_obj = await get_file_by_uuid(db=db, pk=path, user_id=user_id)
-    else:
-        if path[-1] == '/':
-            file_obj = await get_all_by_path(db=db, path=path, user_id=user_id)
-        else:
-            file_obj = await get_file_by_path(db=db, path=path, user_id=user_id)
     if not file_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -13,7 +13,7 @@ class AppSettings(BaseSettings):
     project_host: str = '0.0.0.0'
     project_port: int = 8080
     echo_queries: bool = False
-    token_lifetime: int = 6000  # seconds
+    token_lifetime: int = 600  # seconds
     jwt_secret: str = 'secret_word'
     jwt_algorithm: str = 'HS256'
     aws_access_key_id: str = None

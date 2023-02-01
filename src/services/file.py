@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 from models.file import File
 from schemas.file import FileCreate
+from services.utils import is_valid_uuid
 
 
 async def add_file_db_record(db: AsyncSession, *, obj_in: FileCreate) -> File:
@@ -116,3 +117,14 @@ async def search_files_in_db(
     )
     results = await db.execute(statement=statement, params=params)
     return results.scalars().all()
+
+
+async def get_file_obj(db: AsyncSession, path: str, user_id=str):
+    if is_valid_uuid(path):
+        file_obj = await get_file_by_uuid(db=db, pk=path, user_id=user_id)
+    else:
+        if path[-1] == '/':
+            file_obj = await get_all_by_path(db=db, path=path, user_id=user_id)
+        else:
+            file_obj = await get_file_by_path(db=db, path=path, user_id=user_id)
+    return file_obj
