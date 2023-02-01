@@ -1,4 +1,4 @@
-from pydantic import BaseSettings, PostgresDsn
+from pydantic import BaseSettings, PostgresDsn, HttpUrl
 from logging import config as logging_config
 
 from core.logger import LOGGING
@@ -18,7 +18,7 @@ class AppSettings(BaseSettings):
     jwt_algorithm: str = 'HS256'
     aws_access_key_id: str = None
     aws_secret_access_key: str = None
-    s3_endpoint: str = 'https://storage.yandexcloud.net/'
+    s3_endpoint: HttpUrl = 'https://storage.yandexcloud.net/'
     s3_bucket: str
 
     class Config:
