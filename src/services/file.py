@@ -2,7 +2,7 @@ from datetime import datetime
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_, text, update as sqlalchemy_update
+from sqlalchemy import select, and_, text, update as sqlalchemy_update
 from sqlalchemy.orm import defer
 from sqlalchemy.exc import IntegrityError
 

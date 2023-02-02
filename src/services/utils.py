@@ -9,7 +9,7 @@ symbols = (
 translit = {ord(a): ord(b) for a, b in zip(*symbols)}
 
 
-def is_valid_uuid(uuid_to_test, version=4):
+def is_valid_uuid(uuid_to_test, version=4) -> bool:
     """
     Check if uuid_to_test is a valid UUID.
      Parameters

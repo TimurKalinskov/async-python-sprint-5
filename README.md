@@ -281,3 +281,46 @@ POST /files/revisions
 2. Разрешено использовать готовые библиотеки и пакеты, например, для авторизации. Для поиска можно использовать [сервис openbase](https://openbase.com/categories/python), [PyPi](https://pypi.org/) или на [GitHub](https://github.com/search?).
 3. Используйте **in-memory-db** для кэширования данных.
 4. Для скачивания файлов можно использовать возможности сервера отдачи статики, для хранения - облачное объектное хранилище (s3).
+
+
+## Запуск проекта
+
+1. Создайте файл `.env` в папке `src`:
+```shell
+touch ./src/.env
+```
+2. Пропишите в этом файле переменные окружения:
+```shell
+nano ./src/.env
+```
+
+```text
+# Database
+POSTGRES_USER=<имя пользователя базы данных>
+POSTGRES_PASSWORD=<пароль пользователя базы данных>
+POSTGRES_DB=<название базы данных>
+DATABASE_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+
+# Auth
+JWT_SECRET=<секретное слово для токена>
+JWT_ALGORITHM=<алгоритм для токена (по умолчанию, HS256)>
+TOKEN_LIFETIME=<время жизни токена в секундах>
+
+# S3
+AWS_ACCESS_KEY_ID=<KEY ID для файлового хранилища>
+AWS_SECRET_ACCESS_KEY=<ключ доступа для файлового хранилища>
+S3_BUCKET=<название бакета>
+```
+<details>
+<summary> Также можно прописать другие переменные </summary>
+
+```
+APP_TITLE=<заголовок приложения>
+ECHO_QUERIES=<True или False (выводить в логах запросы к базе данных)>
+```
+</details>
+
+3. Запустите docker-compose
+```shell
+docker-compose up --build
+```

@@ -12,7 +12,11 @@ from services.exceptions import CreateException
 router = APIRouter()
 
 
-@router.post('/register', response_model=TokenJWT)
+@router.post(
+    '/register',
+    response_model=TokenJWT,
+    description='Create new user and take access token.'
+)
 async def create_user(
         user_in: UserLogin, db: AsyncSession = Depends(get_session)
 ):
@@ -26,7 +30,11 @@ async def create_user(
     return sign_jwt(user.id, user.username)
 
 
-@router.post('/login', response_model=TokenJWT)
+@router.post(
+    '/login',
+    response_model=TokenJWT,
+    description='Login to get a token.'
+)
 async def user_login(user: UserLogin, db: AsyncSession = Depends(get_session)):
     try:
         user = await user_crud.check_user(db=db, data_in=user)

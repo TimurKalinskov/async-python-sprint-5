@@ -6,7 +6,7 @@ from fastapi import Request
 from core.config import app_settings
 
 
-def token_response(token: str):
+def token_response(token: str) -> dict:
     return {
         'access_token': token
     }

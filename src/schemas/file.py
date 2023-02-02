@@ -2,8 +2,7 @@ from datetime import datetime
 from uuid import UUID
 from pathlib import Path
 
-from pydantic import BaseModel, constr
-from fastapi import Form
+from pydantic import BaseModel
 
 
 class FileInfo(BaseModel):
