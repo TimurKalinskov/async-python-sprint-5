@@ -5,8 +5,8 @@ from uuid import UUID
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import NoResultFound, IntegrityError
-from sqlalchemy import select, update as sqlalchemy_update
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy import select, delete, update as sqlalchemy_update
 
 from db.db import Base
 
@@ -85,8 +85,9 @@ class RepositoryDB(Repository,
         return db_obj
 
     async def delete(self, db: AsyncSession, *, pk: UUID) -> None:
-        obj = await self.get(db=db, pk=pk)
-        if not obj:
-            raise NoResultFound
-        await db.delete(obj)
+        query = delete(self._model).where(self._model.id == pk)
+        result = await db.execute(query)
+        affected_rows = result.rowcount
         await db.commit()
+        if affected_rows == 0:
+            raise NoResultFound

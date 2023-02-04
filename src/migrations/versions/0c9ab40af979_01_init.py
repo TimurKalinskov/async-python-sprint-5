@@ -1,8 +1,8 @@
 """01_init
 
-Revision ID: 103f76194ea1
+Revision ID: 0c9ab40af979
 Revises: 
-Create Date: 2023-01-31 23:28:58.185315
+Create Date: 2023-02-04 17:24:49.671067
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '103f76194ea1'
+revision = '0c9ab40af979'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,15 +30,17 @@ def upgrade() -> None:
     op.create_table('files',
     sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('name', sa.String(length=256), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True, server_onupdate=sa.text('now()'), onupdate=sa.text('now()')),
     sa.Column('path', sa.Text(), nullable=False),
     sa.Column('size', sa.Integer(), nullable=False),
     sa.Column('is_downloadable', sa.Boolean(), nullable=False),
     sa.Column('account_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('content_type', sa.String(length=256), nullable=True),
+    sa.Column('extension', sa.String(length=256), nullable=True),
     sa.ForeignKeyConstraint(['account_id'], ['users.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('path')
+    sa.UniqueConstraint('path'),
+    sa.UniqueConstraint('path', name='path_uniq')
     )
     op.create_index(op.f('ix_files_created_at'), 'files', ['created_at'], unique=False)
     # ### end Alembic commands ###

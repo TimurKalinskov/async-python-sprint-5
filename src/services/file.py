@@ -1,10 +1,8 @@
-from datetime import datetime
-
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, text, update as sqlalchemy_update
+from sqlalchemy import select, and_, text, func
 from sqlalchemy.orm import defer
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.dialects.postgresql import insert
 
 from models.file import File
 from schemas.file import FileCreate
@@ -13,26 +11,13 @@ from services.utils import is_valid_uuid
 
 async def add_file_db_record(db: AsyncSession, *, obj_in: FileCreate) -> File:
     obj_in_data = jsonable_encoder(obj_in)
-    db_obj = File(**obj_in_data)
-    db.add(db_obj)
-    try:
-        await db.commit()
-        await db.refresh(db_obj)
-    except IntegrityError:
-        # if file already exists
-        await db.rollback()
-        obj_in_data['created_at'] = datetime.utcnow()
-        query = (
-            sqlalchemy_update(File)
-            .where(File.path == db_obj.path)
-            .values(**obj_in_data)
-            .execution_options(synchronize_session='fetch')
-        )
-        await db.execute(query)
-        await db.commit()
-        statement = select(File).where(File.path == str(obj_in.path))
-        result = await db.execute(statement=statement)
-        db_obj = result.scalar_one()
+    obj_in_data[File.created_at.key] = func.now()  # onupdate doesn't work
+    query = insert(File).values(**obj_in_data).on_conflict_do_update(
+        constraint=File.path_uniq_constraint, set_=obj_in_data
+    ).returning(File)
+    result = await db.execute(query)
+    db_obj = result.one()
+    await db.commit()
     return db_obj
 
 
