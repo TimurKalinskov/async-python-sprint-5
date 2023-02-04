@@ -68,6 +68,7 @@ async def get_list_files(
 )
 async def upload_file(
         *,
+        request: Request,
         db: AsyncSession = Depends(get_session),
         user_id: str = Depends(get_user_id),
         path: constr(regex=r'^[^\/].+(?=\/)*[\/]?.+$') = Form(...),
@@ -80,13 +81,10 @@ async def upload_file(
     if path[-1] == '/':
         path = os.path.join(path, file_bytes.filename)
 
-    file_size = len(await file_bytes.read())
-    await file_bytes.seek(0)
-
     object_in = file_schema.FileCreate(
             name=Path(path).name,
             path=path,
-            size=file_size,
+            size=request.headers['content-length'],
             is_downloadable=True,
             account_id=user_id,
             content_type=file_bytes.content_type,
@@ -94,7 +92,7 @@ async def upload_file(
     )
     try:
         await upload_content(
-            client=s3_client, content=await file_bytes.read(), file_path=path
+            client=s3_client, content=file_bytes.file, file_path=path
         )
     except UploadException:
         raise HTTPException(
