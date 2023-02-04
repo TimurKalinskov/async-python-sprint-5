@@ -4,7 +4,7 @@ from fastapi.responses import ORJSONResponse
 
 from core.config import app_settings
 from core.logger import LOGGING
-from api.v1 import base as v1_base
+from api.v1 import api_router as v1_router
 
 
 app = FastAPI(
@@ -14,7 +14,7 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
 )
 
-app.include_router(v1_base.api_router, prefix='/api/v1')
+app.include_router(v1_router, prefix='/api/v1')
 
 
 if __name__ == '__main__':

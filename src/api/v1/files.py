@@ -37,15 +37,14 @@ router = APIRouter()
     dependencies=[Depends(JWTBearer())]
 )
 async def get_list_files(
-        request: Request,
         db: AsyncSession = Depends(get_session),
+        user_id: str = Depends(get_user_id),
         skip: int = Query(default=0, ge=0),
         limit: int = Query(default=100, ge=0)
 ) -> Any:
     """
     Retrieve list of files.
     """
-    user_id = get_user_id(request)
     files = await get_all_files(db=db, user_id=user_id, skip=skip, limit=limit)
 
     files_dict = jsonable_encoder(files)
@@ -69,8 +68,8 @@ async def get_list_files(
 )
 async def upload_file(
         *,
-        request: Request,
         db: AsyncSession = Depends(get_session),
+        user_id: str = Depends(get_user_id),
         path: constr(regex=r'^[^\/].+(?=\/)*[\/]?.+$') = Form(...),
         file_bytes: UploadFile,
         s3_client: AioBaseClient = Depends(get_s3_client)
@@ -89,7 +88,7 @@ async def upload_file(
             path=path,
             size=file_size,
             is_downloadable=True,
-            account_id=get_user_id(request),
+            account_id=user_id,
             content_type=file_bytes.content_type,
             extension=os.path.splitext(Path(path).name)[1].replace('.', '')
     )
@@ -116,9 +115,9 @@ async def upload_file(
 )
 async def download_file(
         *,
-        request: Request,
         zipped: bool = False,
         db: AsyncSession = Depends(get_session),
+        user_id: str = Depends(get_user_id),
         path: constr(regex=r'^[^\/].+(?=\/)*[\/]?.+$') | UUID =
         Query(..., description='Path or UUID4'),
         s3_client: AioBaseClient = Depends(get_s3_client)
@@ -126,7 +125,6 @@ async def download_file(
     """
     Download file.
     """
-    user_id = get_user_id(request)
     file_obj = await get_file_obj(db=db, path=path, user_id=user_id)
 
     if not file_obj:
@@ -174,8 +172,8 @@ async def download_file(
     dependencies=[Depends(JWTBearer())]
 )
 async def search_files(
-        request: Request,
         db: AsyncSession = Depends(get_session),
+        user_id: str = Depends(get_user_id),
         path: str = None,
         extension: str = None,
         limit: int = Query(default=100, ge=0),
@@ -188,7 +186,6 @@ async def search_files(
     """
     Search files.
     """
-    user_id = get_user_id(request)
     files = await search_files_in_db(
         db=db, user_id=user_id, path=path, extension=extension, query=query,
         is_regex=is_regex, order_by=order_by, limit=limit
