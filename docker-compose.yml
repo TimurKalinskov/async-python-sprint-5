@@ -10,7 +10,7 @@ services:
     env_file:
       - ./src/.env
     ports:
-      - "5434:5432"
+      - "${DOCKER_POSTGRES_PORT:-5432}:5432"
   web:
     build:
       context: .
@@ -24,7 +24,9 @@ services:
       - "8080:8080"
     env_file:
       - ./src/.env
-    command: sh -c "alembic upgrade head && python main.py"
+    command: sh -c "sleep 5 && 
+                    alembic upgrade head && 
+                    python -m gunicorn --name file_service -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8080 main:app"
     depends_on:
       - db
   nginx:
@@ -32,6 +34,7 @@ services:
       context: .
       dockerfile: ./dockerization/Dockerfile-balancer
     container_name: nginx_balancer
+    restart: always
     volumes:
       - static_volume:/usr/src/app/src/static
       - media_volume:/usr/src/app/src/media

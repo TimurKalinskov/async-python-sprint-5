@@ -20,3 +20,5 @@ aiobotocore==2.4.2
 python-multipart==0.0.5
 aiozipstream==0.4
 aiofiles==22.1.0
+pytest-env==0.8.1
+gunicorn==20.1.0

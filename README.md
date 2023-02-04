@@ -289,7 +289,7 @@ POST /files/revisions
 ```shell
 touch ./src/.env
 ```
-2. Пропишите в этом файле переменные окружения:
+2. Пропишите в этом файле переменные окружения по примеру .env.example:
 ```shell
 nano ./src/.env
 ```
@@ -299,6 +299,7 @@ nano ./src/.env
 POSTGRES_USER=<имя пользователя базы данных>
 POSTGRES_PASSWORD=<пароль пользователя базы данных>
 POSTGRES_DB=<название базы данных>
+DOCKER_POSTGRES_PORT=<порт для подключения к базе данных>
 DATABASE_DSN=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
 
 # Auth

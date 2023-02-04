@@ -18,22 +18,19 @@ from tests.db_utils import create_db
 from main import app
 
 
-app_settings.database_dsn = f'{app_settings.database_dsn}_test'
-
-
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='session')
 def event_loop() -> Generator[AbstractEventLoop, None, None]:
     loop = asyncio.get_event_loop()
     yield loop
     loop.close()
 
 
-@pytest_asyncio.fixture(scope='function', autouse=True)
+@pytest_asyncio.fixture(scope='session', autouse=True)
 async def _create_db() -> None:
     await create_db(url=app_settings.database_dsn, base=Base)
 
 
-@pytest_asyncio.fixture()
+@pytest_asyncio.fixture(scope="session")
 async def engine() -> AsyncGenerator[AsyncEngine, None]:
     engine_ = create_async_engine(app_settings.database_dsn, future=True)
     try:

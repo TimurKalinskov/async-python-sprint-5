@@ -1,12 +1,12 @@
 import zipfile
 import io
 
-import pytest
 from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient
 from fastapi import status
 
 from services.auth.auth_handler import decode_jwt
+from main import app
 
 
 async def download_iterator():
@@ -14,7 +14,6 @@ async def download_iterator():
     yield file
 
 
-@pytest.mark.asyncio()
 async def test_auth(client: AsyncClient) -> None:
     # register user
     username = 'user_test'
@@ -24,7 +23,7 @@ async def test_auth(client: AsyncClient) -> None:
         'password': password
     }
     response = await client.post(
-        'api/v1/auth/register',
+        app.url_path_for('create_user'),
         json=user_data
     )
     assert response.status_code == status.HTTP_200_OK
@@ -35,7 +34,7 @@ async def test_auth(client: AsyncClient) -> None:
 
     # check login
     response = await client.post(
-        'api/v1/auth/login',
+        app.url_path_for('user_login'),
         json=user_data
     )
     assert response.status_code == status.HTTP_200_OK
@@ -49,7 +48,7 @@ async def test_auth(client: AsyncClient) -> None:
         'password': password
     }
     response = await client.post(
-        'api/v1/auth/login',
+        app.url_path_for('user_login'),
         json=wrong_user
     )
     assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -59,7 +58,7 @@ async def test_auth(client: AsyncClient) -> None:
         'password': 'wrong_password'
     }
     response = await client.post(
-        'api/v1/auth/login',
+        app.url_path_for('user_login'),
         json=wrong_password
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -67,7 +66,6 @@ async def test_auth(client: AsyncClient) -> None:
 
 @patch('api.v1.files.upload_content', return_value=None)
 @patch('api.v1.files.download_content')
-@pytest.mark.asyncio()
 async def test_files(
         mocked_download: AsyncMock, mocked_upload: AsyncMock,
         client: AsyncClient
@@ -78,7 +76,7 @@ async def test_files(
         'password': 'pass123_'
     }
     response = await client.post(
-        'api/v1/auth/register',
+        app.url_path_for('create_user'),
         json=user_data
     )
     assert response.status_code == status.HTTP_200_OK
@@ -87,7 +85,7 @@ async def test_files(
 
     # get empty list of files
     response = await client.get(
-        'api/v1/files/list',
+        app.url_path_for('get_list_files'),
         headers={'Authorization': access_token}
     )
     assert response.status_code == status.HTTP_200_OK
@@ -96,7 +94,7 @@ async def test_files(
     # upload file
     file_content = b'test'
     response = await client.post(
-        'api/v1/files/upload',
+        app.url_path_for('upload_file'),
         data={'path': 'test/path/file.txt'},
         files={'file_bytes': file_content},
         headers={'Authorization': access_token}
@@ -105,7 +103,7 @@ async def test_files(
 
     # check file created
     response = await client.get(
-        'api/v1/files/list',
+        app.url_path_for('get_list_files'),
         headers={'Authorization': access_token}
     )
     assert response.status_code == status.HTTP_200_OK
@@ -115,7 +113,7 @@ async def test_files(
     # download file
     mocked_download.return_value = download_iterator()
     response = await client.get(
-        'api/v1/files/download',
+        app.url_path_for('download_file'),
         params={'path': file_id},
         headers={'Authorization': access_token}
     )
@@ -123,7 +121,7 @@ async def test_files(
     assert response.content == b'testing'
 
     response = await client.get(
-        'api/v1/files/download',
+        app.url_path_for('download_file'),
         params={'path': file_id, 'zipped': True},
         headers={'Authorization': access_token}
     )
@@ -134,21 +132,21 @@ async def test_files(
     # upload new files
     file_content = b'test'
     response = await client.post(
-        'api/v1/files/upload',
+        app.url_path_for('upload_file'),
         data={'path': 'test/path/new.png'},
         files={'file_bytes': file_content},
         headers={'Authorization': access_token}
     )
     assert response.status_code == status.HTTP_201_CREATED
     response = await client.post(
-        'api/v1/files/upload',
+        app.url_path_for('upload_file'),
         data={'path': 'home/doc.txt'},
         files={'file_bytes': file_content},
         headers={'Authorization': access_token}
     )
     assert response.status_code == status.HTTP_201_CREATED
     response = await client.post(
-        'api/v1/files/upload',
+        app.url_path_for('upload_file'),
         data={'path': 'life/for_search.xml'},
         files={'file_bytes': file_content},
         headers={'Authorization': access_token}
@@ -157,7 +155,7 @@ async def test_files(
 
     # check files
     response = await client.get(
-        'api/v1/files/list',
+        app.url_path_for('get_list_files'),
         headers={'Authorization': access_token}
     )
     assert response.status_code == status.HTTP_200_OK
@@ -165,7 +163,7 @@ async def test_files(
 
     # search files
     response = await client.get(
-        'api/v1/files/search',
+        app.url_path_for('search_files'),
         params={'query': 'test'},
         headers={'Authorization': access_token}
     )
@@ -173,7 +171,7 @@ async def test_files(
     assert len(response.json()['matches']) == 2
 
     response = await client.get(
-        'api/v1/files/search',
+        app.url_path_for('search_files'),
         params={'query': 'search'},
         headers={'Authorization': access_token}
     )
@@ -181,7 +179,7 @@ async def test_files(
     assert len(response.json()['matches']) == 1
 
     response = await client.get(
-        'api/v1/files/search',
+        app.url_path_for('search_files'),
         params={'extension': 'txt'},
         headers={'Authorization': access_token}
     )
@@ -189,7 +187,7 @@ async def test_files(
     assert len(response.json()['matches']) == 2
 
     response = await client.get(
-        'api/v1/files/search',
+        app.url_path_for('search_files'),
         params={'extension': 'txt', 'query': 'doc'},
         headers={'Authorization': access_token}
     )
@@ -197,7 +195,7 @@ async def test_files(
     assert len(response.json()['matches']) == 1
 
     response = await client.get(
-        'api/v1/files/search',
+        app.url_path_for('search_files'),
         params={'is_regex': True, 'query': '^test.*txt$'},
         headers={'Authorization': access_token}
     )
