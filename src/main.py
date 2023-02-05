@@ -1,6 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
+from starlette_validation_uploadfile import ValidateUploadFileMiddleware
 
 from core.config import app_settings
 from core.logger import LOGGING
@@ -15,6 +16,12 @@ app = FastAPI(
 )
 
 app.include_router(v1_router, prefix='/api/v1')
+
+app.add_middleware(
+        ValidateUploadFileMiddleware,
+        app_path=app.url_path_for('upload_file'),
+        max_size=app_settings.max_size_file,
+)
 
 
 if __name__ == '__main__':

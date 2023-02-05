@@ -11,7 +11,7 @@ from services.utils import is_valid_uuid
 
 async def add_file_db_record(db: AsyncSession, *, obj_in: FileCreate) -> File:
     obj_in_data = jsonable_encoder(obj_in)
-    obj_in_data[File.created_at.key] = func.now()  # onupdate doesn't work
+    obj_in_data[File.created_at.key] = func.now()  # onupdate doesn't work. https://github.com/sqlalchemy/sqlalchemy/discussions/5903#discussioncomment-327672
     query = insert(File).values(**obj_in_data).on_conflict_do_update(
         constraint=File.path_uniq_constraint, set_=obj_in_data
     ).returning(File)

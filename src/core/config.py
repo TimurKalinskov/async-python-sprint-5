@@ -20,6 +20,7 @@ class AppSettings(BaseSettings):
     aws_secret_access_key: str = None
     s3_endpoint: HttpUrl = 'https://storage.yandexcloud.net/'
     s3_bucket: str
+    max_size_file: int = 104857600  # 100 MB
 
     class Config:
         env_file = '.env'

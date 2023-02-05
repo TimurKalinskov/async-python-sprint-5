@@ -21,7 +21,7 @@ services:
       - static_volume:/usr/src/app/src/static
       - media_volume:/usr/src/app/src/media
     ports:
-      - "8080:8080"
+      - "${DOCKER_WEB_PORT:-8080}:8080"
     env_file:
       - ./src/.env
     command: sh -c "sleep 5 && 
